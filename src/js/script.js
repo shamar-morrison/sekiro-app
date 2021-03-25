@@ -12,8 +12,6 @@ const inputDuration = document.querySelector('.form__input--duration');
 const inputCadence = document.querySelector('.form__input--cadence');
 const inputElevation = document.querySelector('.form__input--elevation');
 
-let map, mapEvent;
-
 // popup options
 const popupOptions = {
 	maxWidth: 250,
@@ -28,76 +26,108 @@ const markerOptions = {
 	draggable: true,
 };
 
-// initalise map
-const initMap = position => {
-	console.debug('Location received');
-	// get user location from Geolocation API
-	let { latitude, longitude } = position.coords;
+class App {
+	#mapObj;
+	#mapEvent;
 
-	latitude = Number(latitude).toFixed(3);
-	longitude = Number(longitude).toFixed(3);
-	const coords = [latitude, longitude];
+	constructor() {
+		this._getPosition();
 
-	// map options
-	const mapOptions = {
-		center: coords,
-		zoom: 13,
-		closePopupOnClick: false,
-		riseOnHover: true,
-	};
+		// workout form event listener
+		form.addEventListener('submit', e => {
+			e.preventDefault();
+			this._showForm();
+		});
 
-	// Center map on current coords
-	map = L.map(mapContainer, mapOptions);
+		// workout type event listener
+		inputType.addEventListener('change', this._toggleElevationField);
+	}
 
-	// Tile styles
-	L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-		attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-	}).addTo(map);
+	_getPosition() {
+		// get GeoLocation
+		if (navigator.geolocation) {
+			// check if browser supports geolocation API
+			navigator.geolocation.getCurrentPosition(this._loadMap.bind(this), () => {
+				document.querySelector('.map-load-failed').classList.remove('hidden');
+			});
+		}
+	}
 
-	// initial popup marker when map is first initialised
-	// L.marker(coords, markerOptions).addTo(map).bindPopup('Start adding your workouts by clicking anywhere on the map!').openPopup();
+	_loadMap(position) {
+		console.debug('Location received');
+		// get user location from Geolocation API
+		let { latitude, longitude } = position.coords;
 
-	// Event handler for map clicks
-	const mapClickHandler = function (event) {
-		mapEvent = event; // set mapEvent object to a global variable
+		latitude = Number(latitude).toFixed(3);
+		longitude = Number(longitude).toFixed(3);
+		const coords = [latitude, longitude];
 
-		// Reveal form
-		form.classList.remove('hidden');
-		inputDistance.focus();
-	};
-	map.on('click', mapClickHandler);
-};
+		// map options
+		const mapOptions = {
+			center: coords,
+			zoom: 13,
+			closePopupOnClick: false,
+			riseOnHover: true,
+		};
 
-const formEventHandler = function (e) {
-	e.preventDefault();
-	const { lat, lng } = mapEvent.latlng;
-	const newCoords = [lat, lng];
+		// Center map on current coords
+		this.#mapObj = L.map(mapContainer, mapOptions);
 
-	popupOptions.className = inputType.value === 'cycling' ? 'cycling-popup' : 'running-popup';
+		// Tile styles
+		L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+			attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+		}).addTo(this.#mapObj);
 
-	// add marker at lat, lng
-	L.marker(newCoords, markerOptions).addTo(map).bindPopup('Welcome', popupOptions).openPopup();
+		// initial popup marker when map is first initialised
+		// L.marker(coords, markerOptions).addTo(map).bindPopup('Start adding your workouts by clicking anywhere on the map!').openPopup();
 
-	// clear form fields
-	document.querySelectorAll('input').forEach(el => {
-		el.value = '';
-		el.blur();
-	});
-};
+		// Event handler for map clicks
+		this.#mapObj.on('click', event => {
+			this.#mapEvent = event;
 
-// workout form event listener
-form.addEventListener('submit', formEventHandler);
+			// Reveal form
+			form.classList.remove('hidden');
+			inputDistance.focus();
+		});
+	}
 
-// workout type event listener
-inputType.addEventListener('change', () => {
-	inputCadence.closest('.form__row').classList.toggle('form__row--hidden');
-	inputElevation.closest('.form__row').classList.toggle('form__row--hidden');
-});
+	_setLocalStorage() {}
 
-// get GeoLocation
-if (navigator.geolocation) {
-	// check if browser supports geolocation API
-	navigator.geolocation.getCurrentPosition(initMap, () => {
-		document.querySelector('.map-load-failed').classList.remove('hidden');
-	});
+	_getLocalStorage() {}
+
+	_newWorkout() {}
+
+	_renderWorkout(workout) {}
+
+	_renderWorkoutMarker() {}
+
+	_showForm() {
+		const { lat, lng } = this.#mapEvent.latlng;
+		const newCoords = [lat, lng];
+
+		popupOptions.className = inputType.value === 'cycling' ? 'cycling-popup' : 'running-popup';
+
+		// add marker at lat, lng
+		L.marker(newCoords, markerOptions).addTo(this.#mapObj).bindPopup('Welcome', popupOptions).openPopup();
+
+		// clear form fields
+		document.querySelectorAll('input').forEach(el => {
+			el.value = '';
+			el.blur();
+		});
+	}
+
+	_hideForm() {}
+
+	_toggleElevationField() {
+		inputCadence.closest('.form__row').classList.toggle('form__row--hidden');
+		inputElevation.closest('.form__row').classList.toggle('form__row--hidden');
+	}
+
+	_moveToPopup() {}
+
+	reset() {}
 }
+
+// initalise App
+const InitApp = new App();
