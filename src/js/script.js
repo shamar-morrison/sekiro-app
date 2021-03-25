@@ -26,6 +26,9 @@ const markerOptions = {
 	draggable: true,
 };
 
+/**
+ * App Class
+ */
 class App {
 	#mapObj;
 	#mapEvent;
@@ -36,7 +39,7 @@ class App {
 		// workout form event listener
 		form.addEventListener('submit', e => {
 			e.preventDefault();
-			this._showForm();
+			this._newWorkout();
 		});
 
 		// workout type event listener
@@ -82,26 +85,22 @@ class App {
 		// L.marker(coords, markerOptions).addTo(map).bindPopup('Start adding your workouts by clicking anywhere on the map!').openPopup();
 
 		// Event handler for map clicks
-		this.#mapObj.on('click', event => {
-			this.#mapEvent = event;
+		this.#mapObj.on('click', event => this._showForm(event));
+	}
 
-			// Reveal form
-			form.classList.remove('hidden');
-			inputDistance.focus();
-		});
+	_showForm(event) {
+		this.#mapEvent = event;
+
+		// Reveal form
+		form.classList.remove('hidden');
+		inputDistance.focus();
 	}
 
 	_setLocalStorage() {}
 
 	_getLocalStorage() {}
 
-	_newWorkout() {}
-
-	_renderWorkout(workout) {}
-
-	_renderWorkoutMarker() {}
-
-	_showForm() {
+	_newWorkout() {
 		const { lat, lng } = this.#mapEvent.latlng;
 		const newCoords = [lat, lng];
 
@@ -117,6 +116,10 @@ class App {
 		});
 	}
 
+	_renderWorkout(workout) {}
+
+	_renderWorkoutMarker() {}
+
 	_hideForm() {}
 
 	_toggleElevationField() {
@@ -127,6 +130,18 @@ class App {
 	_moveToPopup() {}
 
 	reset() {}
+}
+/**
+ * Workout Class
+ */
+
+class Workout {
+	constructor(coords, distance, duration) {
+		this.date = new Date();
+		this.coords = coords;
+		this.distance = distance; // in km
+		this.duration = duration; // in minutes
+	}
 }
 
 // initalise App
