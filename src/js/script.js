@@ -17,7 +17,7 @@ const popupOptions = {
 	maxWidth: 250,
 	minWidth: 100,
 	autoClose: false,
-	className: 'cycling-popup',
+	className: 'cycling-popup', // default value
 };
 
 // marker options
@@ -34,6 +34,7 @@ class App {
 	_mapEvent;
 
 	constructor() {
+		this.arrWorkouts = [];
 		this._getPosition();
 
 		// workout form event listener
@@ -110,24 +111,28 @@ class App {
 		const duration = +inputDuration.value;
 		const elevation = +inputElevation.value;
 		const cadence = +inputCadence.value;
+		let newWorkout;
 
 		// if activity === running, create running object
 		if (type === 'running') {
-			const newRunWorkout = new Running(newCoords, distance, duration, cadence);
+			newWorkout = new Running(newCoords, distance, duration, cadence);
+			popupOptions.className = 'running-popup';
 		}
 
 		// if activity === cycling, create cycling object
+		if (type === 'cycling') {
+			newWorkout = new Cycling(newCoords, distance, duration, elevation);
+			popupOptions.className = 'cycling-popup';
+		}
 
-		// add new object to workout array
+		// add new workout to workout array
+		this.arrWorkouts.push(newWorkout);
 
-		// render workout on map as marker
+		// add workout marker to map
+		this._renderWorkoutMarker(newWorkout);
 
 		// render workout to list
-
-		popupOptions.className = inputType.value === 'cycling' ? 'cycling-popup' : 'running-popup';
-
-		// add marker at lat, lng
-		L.marker(newCoords, markerOptions).addTo(this._mapObj).bindPopup('Welcome', popupOptions).openPopup();
+		this._renderWorkout(newWorkout);
 
 		// clear form fields
 		document.querySelectorAll('input').forEach(el => {
@@ -136,9 +141,73 @@ class App {
 		});
 	}
 
-	_renderWorkout(workout) {}
+	_renderWorkout(workout) {
+		let workoutHTML;
+		const animation = `animation: workout-anim .5s cubic-bezier(0.04, 0.4, 0.46, 1.04) .1s forwards;`;
+		if (workout.type === 'running') {
+			workoutHTML = `
+				<li class="workout workout--${workout.type}" data-id="${workout.id}" style="${animation}">
+				<h2 class="workout__title">Running on April 14</h2>
+				<div class="workout__details">
+					<span class="workout__icon">🏃‍♂️</span>
+					<span class="workout__value">${workout.distance}</span>
+					<span class="workout__unit">km</span>
+				</div>
+				<div class="workout__details">
+					<span class="workout__icon">⏱</span>
+					<span class="workout__value">${workout.duration}</span>
+					<span class="workout__unit">min</span>
+				</div>
+				<div class="workout__details">
+					<span class="workout__icon">⚡️</span>
+					<span class="workout__value">${workout.calcPace()}</span>
+					<span class="workout__unit">min/km</span>
+				</div>
+				<div class="workout__details">
+					<span class="workout__icon">🦶🏼</span>
+					<span class="workout__value">${workout.cadence}</span>
+					<span class="workout__unit">spm</span>
+				</div>
+				</li>
+				`;
+		} else if (workout.type === 'cycling') {
+			workoutHTML = `
+				<li class="workout workout--${workout.type}" data-id="${workout.id}" style="${animation}">
+					<h2 class="workout__title">Cycling on ${workout.date.toString()}</h2>
+					<div class="workout__details">
+						<span class="workout__icon">🚴‍♀️</span>
+						<span class="workout__value">${workout.distance}</span>
+						<span class="workout__unit">km</span>
+					</div>
+					<div class="workout__details">
+						<span class="workout__icon">⏱</span>
+						<span class="workout__value">${workout.duration}</span>
+						<span class="workout__unit">min</span>
+					</div>
+					<div class="workout__details">
+						<span class="workout__icon">⚡️</span>
+						<span class="workout__value">${workout.calcSpeed()}</span>
+						<span class="workout__unit">km/h</span>
+					</div>
+					<div class="workout__details">
+						<span class="workout__icon">⛰</span>
+						<span class="workout__value">${workout.elevGain}</span>
+						<span class="workout__unit">m</span>
+					</div>
+       			 </li>
+				`;
+		}
 
-	_renderWorkoutMarker() {}
+		containerWorkouts.insertAdjacentHTML('beforeend', workoutHTML);
+	}
+
+	_renderWorkoutMarker(workout) {
+		L.marker(workout.coords, markerOptions)
+			.addTo(this._mapObj)
+			.bindPopup(L.popup(popupOptions))
+			.setPopupContent(workout.distance + '')
+			.openPopup();
+	}
 
 	_hideForm() {}
 
@@ -163,6 +232,8 @@ class Workout {
 		this.distance = distance; // in km
 		this.duration = duration; // in minutes
 	}
+
+	_setDescription() {}
 }
 
 /**
@@ -172,6 +243,7 @@ class Running extends Workout {
 	constructor(coords, distance, duration, cadence) {
 		super(coords, distance, duration);
 		this.cadence = cadence;
+		this.type = 'running';
 		this.calcPace();
 	}
 
@@ -189,6 +261,7 @@ class Cycling extends Workout {
 	constructor(coords, distance, duration, elevGain) {
 		super(coords, distance, duration);
 		this.elevGain = elevGain;
+		this.type = 'cycling';
 		this.calcSpeed();
 	}
 
