@@ -1,8 +1,5 @@
 'use strict';
 
-// prettier-ignore
-const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-
 const mapContainer = document.getElementById('map');
 const form = document.querySelector('.form');
 const containerWorkouts = document.querySelector('.workouts');
@@ -26,6 +23,8 @@ const markerOptions = {
 	draggable: true,
 };
 
+// let mapMarker;
+
 /**
  * App Class
  */
@@ -41,10 +40,14 @@ class App {
 		form.addEventListener('submit', e => {
 			e.preventDefault();
 			this._newWorkout();
+			console.debug('new workout created!');
 		});
 
 		// workout type event listener
 		inputType.addEventListener('change', this._toggleElevationField);
+
+		// move to marker on workout click
+		containerWorkouts.addEventListener('click', e => this._moveToMarker(e));
 	}
 
 	_getPosition() {
@@ -78,15 +81,15 @@ class App {
 		this._mapObj = L.map(mapContainer, mapOptions);
 
 		// Tile styles
-		L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+		// {s}.tile.openstreetmap.org/{z}/{x}/{y}.png
+		https: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 			attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
 		}).addTo(this._mapObj);
 
-		// initial popup marker when map is first initialised
-		// L.marker(coords, markerOptions).addTo(map).bindPopup('Start adding your workouts by clicking anywhere on the map!').openPopup();
-
 		// Event handler for map clicks
-		this._mapObj.on('click', event => this._showForm(event));
+		this._mapObj.on('click', event => {
+			this._showForm(event);
+		});
 	}
 
 	_showForm(event) {
@@ -147,33 +150,33 @@ class App {
 		if (workout.type === 'running') {
 			workoutHTML = `
 				<li class="workout workout--${workout.type}" data-id="${workout.id}" style="${animation}">
-				<h2 class="workout__title">Running on April 14</h2>
-				<div class="workout__details">
-					<span class="workout__icon">🏃‍♂️</span>
-					<span class="workout__value">${workout.distance}</span>
-					<span class="workout__unit">km</span>
-				</div>
-				<div class="workout__details">
-					<span class="workout__icon">⏱</span>
-					<span class="workout__value">${workout.duration}</span>
-					<span class="workout__unit">min</span>
-				</div>
-				<div class="workout__details">
-					<span class="workout__icon">⚡️</span>
-					<span class="workout__value">${workout.calcPace()}</span>
-					<span class="workout__unit">min/km</span>
-				</div>
-				<div class="workout__details">
-					<span class="workout__icon">🦶🏼</span>
-					<span class="workout__value">${workout.cadence}</span>
-					<span class="workout__unit">spm</span>
-				</div>
+					<h2 class="workout__title">${workout.description}</h2>
+					<div class="workout__details">
+						<span class="workout__icon">🏃‍♂️</span>
+						<span class="workout__value">${workout.distance}</span>
+						<span class="workout__unit">km</span>
+					</div>
+					<div class="workout__details">
+						<span class="workout__icon">⏱</span>
+						<span class="workout__value">${workout.duration}</span>
+						<span class="workout__unit">min</span>
+					</div>
+					<div class="workout__details">
+						<span class="workout__icon">⚡️</span>
+						<span class="workout__value">${workout.pace.toFixed(1)}</span>
+						<span class="workout__unit">min/km</span>
+					</div>
+					<div class="workout__details">
+						<span class="workout__icon">🦶🏼</span>
+						<span class="workout__value">${workout.cadence}</span>
+						<span class="workout__unit">spm</span>
+					</div>
 				</li>
 				`;
 		} else if (workout.type === 'cycling') {
 			workoutHTML = `
 				<li class="workout workout--${workout.type}" data-id="${workout.id}" style="${animation}">
-					<h2 class="workout__title">Cycling on ${workout.date.toString()}</h2>
+					<h2 class="workout__title">${workout.description}</h2>
 					<div class="workout__details">
 						<span class="workout__icon">🚴‍♀️</span>
 						<span class="workout__value">${workout.distance}</span>
@@ -186,7 +189,7 @@ class App {
 					</div>
 					<div class="workout__details">
 						<span class="workout__icon">⚡️</span>
-						<span class="workout__value">${workout.calcSpeed()}</span>
+						<span class="workout__value">${workout.speed.toFixed(1)}</span>
 						<span class="workout__unit">km/h</span>
 					</div>
 					<div class="workout__details">
@@ -198,25 +201,34 @@ class App {
 				`;
 		}
 
-		containerWorkouts.insertAdjacentHTML('beforeend', workoutHTML);
+		form.insertAdjacentHTML('afterend', workoutHTML);
+		this._hideForm();
 	}
 
 	_renderWorkoutMarker(workout) {
 		L.marker(workout.coords, markerOptions)
 			.addTo(this._mapObj)
 			.bindPopup(L.popup(popupOptions))
-			.setPopupContent(workout.distance + '')
+			.setPopupContent(`${workout.type === 'running' ? '🏃‍♂️' : '🚴‍♀️'} ${workout.description}`)
 			.openPopup();
 	}
 
-	_hideForm() {}
+	_hideForm() {
+		form.classList.add('hidden');
+	}
 
 	_toggleElevationField() {
 		inputCadence.closest('.form__row').classList.toggle('form__row--hidden');
 		inputElevation.closest('.form__row').classList.toggle('form__row--hidden');
 	}
 
-	_moveToPopup() {}
+	_moveToMarker(event) {
+		if (event.target.closest('.workout') === null) return;
+
+		const id = event.target.closest('.workout').getAttribute('data-id');
+		const workout = this.arrWorkouts.find(workout => workout.id === id);
+		this._mapObj.setView(workout.coords, 13, { animate: true, pan: { duration: 1, easeLinearity: 0.41 } });
+	}
 
 	reset() {}
 }
@@ -233,7 +245,31 @@ class Workout {
 		this.duration = duration; // in minutes
 	}
 
-	_setDescription() {}
+	_setDescription() {
+		const months = [
+			'January',
+			'February',
+			'March',
+			'April',
+			'May',
+			'June',
+			'July',
+			'August',
+			'September',
+			'October',
+			'November',
+			'December',
+		];
+
+		const day = ['Mon', 'Tue', 'Wed', 'Thur', 'Fri', 'Sat', 'Sun'];
+
+		this.description = `${this.type.slice(0, 1).toUpperCase() + this.type.slice(1)} on ${day[this.date.getDay()]}, ${
+			months[this.date.getMonth()]
+		} 
+		${this.date.getDate()}`;
+
+		return this.description;
+	}
 }
 
 /**
@@ -245,6 +281,7 @@ class Running extends Workout {
 		this.cadence = cadence;
 		this.type = 'running';
 		this.calcPace();
+		this._setDescription();
 	}
 
 	calcPace() {
@@ -263,6 +300,7 @@ class Cycling extends Workout {
 		this.elevGain = elevGain;
 		this.type = 'cycling';
 		this.calcSpeed();
+		this._setDescription();
 	}
 
 	calcSpeed() {
