@@ -35,6 +35,7 @@ class App {
 	constructor() {
 		this.arrWorkouts = [];
 		this._getPosition();
+		this._getLocalStorage();
 
 		// workout form event listener
 		form.addEventListener('submit', e => {
@@ -90,6 +91,11 @@ class App {
 		this._mapObj.on('click', event => {
 			this._showForm(event);
 		});
+
+		// load markers from local storage
+		this.arrWorkouts.forEach(workout => {
+			this._renderWorkoutMarker(workout);
+		});
 	}
 
 	_showForm(event) {
@@ -100,9 +106,21 @@ class App {
 		inputDistance.focus();
 	}
 
-	_setLocalStorage() {}
+	_setLocalStorage() {
+		localStorage.setItem('workouts', JSON.stringify(this.arrWorkouts));
+	}
 
-	_getLocalStorage() {}
+	_getLocalStorage() {
+		if (localStorage.getItem('workouts') === null) return;
+
+		const workouts = JSON.parse(localStorage.getItem('workouts'));
+		this.arrWorkouts = workouts;
+
+		// load workouts from local storage (the browser)
+		this.arrWorkouts.forEach(workout => {
+			this._renderWorkout(workout);
+		});
+	}
 
 	_newWorkout() {
 		const { lat, lng } = this._mapEvent.latlng;
@@ -136,6 +154,9 @@ class App {
 
 		// render workout to list
 		this._renderWorkout(newWorkout);
+
+		// add workout to local storage
+		this._setLocalStorage();
 
 		// clear form fields
 		document.querySelectorAll('input').forEach(el => {
@@ -230,6 +251,7 @@ class App {
 		this._mapObj.setView(workout.coords, 13, { animate: true, pan: { duration: 1, easeLinearity: 0.41 } });
 	}
 
+	// clear workouts from local storage
 	reset() {}
 }
 
