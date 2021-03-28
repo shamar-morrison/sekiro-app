@@ -26,7 +26,7 @@ const markerOptions = {
 // let mapMarker;
 
 /**
- * App Class
+ * Main Application Class
  */
 class App {
 	_mapObj;
@@ -82,7 +82,6 @@ class App {
 		this._mapObj = L.map(mapContainer, mapOptions);
 
 		// Tile styles
-		// {s}.tile.openstreetmap.org/{z}/{x}/{y}.png
 		https: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 			attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
 		}).addTo(this._mapObj);
@@ -114,7 +113,7 @@ class App {
 		if (localStorage.getItem('workouts') === null) return;
 
 		const workouts = JSON.parse(localStorage.getItem('workouts'));
-		this.arrWorkouts = workouts;
+		this.arrWorkouts = workouts; // restore workouts array
 
 		// load workouts from local storage (the browser)
 		this.arrWorkouts.forEach(workout => {
@@ -252,7 +251,10 @@ class App {
 	}
 
 	// clear workouts from local storage
-	reset() {}
+	reset() {
+		localStorage.removeItem('workouts');
+		location.reload(); // reload browser
+	}
 }
 
 /**
