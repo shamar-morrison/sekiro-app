@@ -24,6 +24,8 @@ const markerOptions = {
 };
 
 // let mapMarker;
+let arrWorkouts = [];
+let arrMarkers = [];
 
 /**
  * Main Application Class
@@ -33,7 +35,6 @@ class App {
 	_mapEvent;
 
 	constructor() {
-		this.arrWorkouts = [];
 		this._getPosition();
 		this._getLocalStorage();
 
@@ -97,7 +98,7 @@ class App {
 		});
 
 		// load markers from local storage
-		this.arrWorkouts.forEach(workout => {
+		arrWorkouts.forEach(workout => {
 			this._renderWorkoutMarker(workout);
 		});
 	}
@@ -108,20 +109,22 @@ class App {
 		// Reveal form
 		form.classList.remove('hidden');
 		inputDistance.focus();
+		document.querySelector('.form__title').style.display = 'block';
 	}
 
 	_setLocalStorage() {
-		localStorage.setItem('workouts', JSON.stringify(this.arrWorkouts));
+		localStorage.setItem('workouts', JSON.stringify(arrWorkouts));
+		return this;
 	}
 
 	_getLocalStorage() {
 		if (localStorage.getItem('workouts') === null) return;
 
 		const workouts = JSON.parse(localStorage.getItem('workouts'));
-		this.arrWorkouts = workouts; // restore workouts array
+		arrWorkouts = workouts; // restore workouts array
 
 		// load workouts from local storage (the browser)
-		this.arrWorkouts.forEach(workout => {
+		arrWorkouts.forEach(workout => {
 			this._renderWorkout(workout);
 		});
 	}
@@ -151,7 +154,7 @@ class App {
 		}
 
 		// add new workout to workout array
-		this.arrWorkouts.push(newWorkout);
+		arrWorkouts.push(newWorkout);
 
 		// add workout marker to map
 		this._renderWorkoutMarker(newWorkout);
@@ -176,8 +179,8 @@ class App {
 			workoutHTML = `
 				<li class="workout workout--${workout.type}" data-id="${workout.id}" style="${animation}">
 					<div class="controls">
-						<i class="delete-icon fas fa-times-circle"></i>
 						<i class="edit-icon fas fa-edit"></i>
+						<i class="delete-icon fas fa-times-circle"></i>
 					</div>
 					<h2 class="workout__title">${workout.description}</h2>
 					<div class="workout__details">
@@ -206,8 +209,8 @@ class App {
 			workoutHTML = `
 				<li class="workout workout--${workout.type}" data-id="${workout.id}" style="${animation}">
 					<div class="controls">
-						<i class="delete-icon fas fa-times-circle"></i>
 						<i class="edit-icon fas fa-edit"></i>
+						<i class="delete-icon fas fa-times-circle"></i>
 					</div>
 					<h2 class="workout__title">${workout.description}</h2>
 					<div class="workout__details">
@@ -237,30 +240,55 @@ class App {
 		form.insertAdjacentHTML('afterend', workoutHTML);
 
 		// show workout item controls on hover
-		this._showWorkoutControls();
+		this._handleWorkoutControls();
 
 		this._hideForm();
 	}
 
-	_showWorkoutControls() {
+	_handleWorkoutControls() {
+		const app = this._setLocalStorage(); // we need the 'this' keyword
 		const workoutItem = document.querySelectorAll('.workout');
 		workoutItem.forEach(workout => {
+			// show controls on hover
 			workout.onmouseover = function (event) {
 				const workoutControls = workout.querySelector('.controls');
-				console.debug('mouseover', workoutControls);
 				workoutControls.style.opacity = 1;
 			};
 
 			workout.onmouseout = function (event) {
 				const workoutControls = workout.querySelector('.controls');
-				console.debug('mouseout', workoutControls);
 				workoutControls.style.opacity = 0;
+			};
+
+			// delete workout item
+			workout.onclick = function (event) {
+				if (event.target.classList.contains('delete-icon')) {
+					event.stopPropagation();
+					const target = event.target.closest('.workout');
+					const targetID = target.dataset.id;
+
+					// remove workout from list
+					target.style.opacity = 0;
+					target.style.display = 'none';
+					containerWorkouts.removeChild(target);
+
+					// remove marker from map
+					const markerIndex = arrMarkers.findIndex(marker => marker.id === targetID);
+					arrMarkers[markerIndex].remove();
+
+					// remove workout from array
+					const workoutIndex = arrWorkouts.findIndex(workout => workout.id === targetID);
+					arrWorkouts.splice(workoutIndex, 1);
+					console.debug(arrWorkouts);
+					// set local storage
+					app._setLocalStorage();
+				}
 			};
 		});
 	}
 
 	_renderWorkoutMarker(workout) {
-		L.marker(workout.coords, markerOptions)
+		const marker = L.marker(workout.coords, markerOptions)
 			.addTo(this._mapObj)
 			.bindPopup(
 				L.popup({
@@ -272,10 +300,19 @@ class App {
 			)
 			.setPopupContent(`${workout.type === 'running' ? '🏃‍♂️' : '🚴‍♀️'} ${workout.description}`)
 			.openPopup();
+
+		arrMarkers.push(marker); // add marker to array
+
+		/**
+		 * Each marker should correspond to a workout object
+		 * add an ID to the new marker which matches the newly created workout object
+		 */
+		marker.id = workout.id;
 	}
 
 	_hideForm() {
 		form.classList.add('hidden');
+		document.querySelector('.form__title').style.display = 'none';
 	}
 
 	_toggleElevationField() {
@@ -287,7 +324,7 @@ class App {
 		if (event.target.closest('.workout') === null) return;
 
 		const id = event.target.closest('.workout').getAttribute('data-id');
-		const workout = this.arrWorkouts.find(workout => workout.id === id);
+		const workout = arrWorkouts.find(workout => workout.id === id);
 		this._mapObj.setView(workout.coords, 13, { animate: true, pan: { duration: 1, easeLinearity: 0.41 } });
 	}
 
@@ -377,4 +414,4 @@ class Cycling extends Workout {
 
 // initalise App
 const InitApp = new App();
-localStorage.clear('workout');
+// localStorage.clear('workout');
