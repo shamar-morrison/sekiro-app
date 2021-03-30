@@ -37,6 +37,11 @@ class App {
 		this._getPosition();
 		this._getLocalStorage();
 
+		// hide form on ESC keypress
+		document.addEventListener('keydown', event => {
+			if (event.key === 'Escape') this._hideForm();
+		});
+
 		// workout form event listener
 		form.addEventListener('submit', e => {
 			e.preventDefault();
@@ -170,6 +175,10 @@ class App {
 		if (workout.type === 'running') {
 			workoutHTML = `
 				<li class="workout workout--${workout.type}" data-id="${workout.id}" style="${animation}">
+					<div class="controls">
+						<i class="fas fa-times-circle"></i>
+						<i class="fas fa-edit"></i>
+					</div>
 					<h2 class="workout__title">${workout.description}</h2>
 					<div class="workout__details">
 						<span class="workout__icon">🏃‍♂️</span>
@@ -222,6 +231,20 @@ class App {
 		}
 
 		form.insertAdjacentHTML('afterend', workoutHTML);
+
+		const workoutItem = document.querySelectorAll('.workout');
+
+		// show workout item controls on hover
+		workoutItem.forEach(item => {
+			item.addEventListener('mouseover', function () {
+				const workoutControls = this.firstElementChild;
+				workoutControls.style.opacity = 1;
+			});
+			item.addEventListener('mouseout', function () {
+				const workoutControls = this.firstElementChild;
+				workoutControls.style.opacity = 0;
+			});
+		});
 		this._hideForm();
 	}
 
@@ -336,3 +359,4 @@ class Cycling extends Workout {
 
 // initalise App
 const InitApp = new App();
+// localStorage.clear('workout');
