@@ -176,8 +176,8 @@ class App {
 			workoutHTML = `
 				<li class="workout workout--${workout.type}" data-id="${workout.id}" style="${animation}">
 					<div class="controls">
-						<i class="fas fa-times-circle"></i>
-						<i class="fas fa-edit"></i>
+						<i class="delete-icon fas fa-times-circle"></i>
+						<i class="edit-icon fas fa-edit"></i>
 					</div>
 					<h2 class="workout__title">${workout.description}</h2>
 					<div class="workout__details">
@@ -205,6 +205,10 @@ class App {
 		} else if (workout.type === 'cycling') {
 			workoutHTML = `
 				<li class="workout workout--${workout.type}" data-id="${workout.id}" style="${animation}">
+					<div class="controls">
+						<i class="delete-icon fas fa-times-circle"></i>
+						<i class="edit-icon fas fa-edit"></i>
+					</div>
 					<h2 class="workout__title">${workout.description}</h2>
 					<div class="workout__details">
 						<span class="workout__icon">🚴‍♀️</span>
@@ -232,26 +236,40 @@ class App {
 
 		form.insertAdjacentHTML('afterend', workoutHTML);
 
-		const workoutItem = document.querySelectorAll('.workout');
-
 		// show workout item controls on hover
-		workoutItem.forEach(item => {
-			item.addEventListener('mouseover', function () {
-				const workoutControls = this.firstElementChild;
-				workoutControls.style.opacity = 1;
-			});
-			item.addEventListener('mouseout', function () {
-				const workoutControls = this.firstElementChild;
-				workoutControls.style.opacity = 0;
-			});
-		});
+		this._showWorkoutControls();
+
 		this._hideForm();
+	}
+
+	_showWorkoutControls() {
+		const workoutItem = document.querySelectorAll('.workout');
+		workoutItem.forEach(workout => {
+			workout.onmouseover = function (event) {
+				const workoutControls = workout.querySelector('.controls');
+				console.debug('mouseover', workoutControls);
+				workoutControls.style.opacity = 1;
+			};
+
+			workout.onmouseout = function (event) {
+				const workoutControls = workout.querySelector('.controls');
+				console.debug('mouseout', workoutControls);
+				workoutControls.style.opacity = 0;
+			};
+		});
 	}
 
 	_renderWorkoutMarker(workout) {
 		L.marker(workout.coords, markerOptions)
 			.addTo(this._mapObj)
-			.bindPopup(L.popup(popupOptions))
+			.bindPopup(
+				L.popup({
+					maxWidth: popupOptions.maxWidth,
+					minWidth: popupOptions.minWidth,
+					autoClose: popupOptions.autoClose,
+					className: `${workout.type === 'running' ? 'running-popup' : 'cycling-popup'}`,
+				})
+			)
 			.setPopupContent(`${workout.type === 'running' ? '🏃‍♂️' : '🚴‍♀️'} ${workout.description}`)
 			.openPopup();
 	}
@@ -359,4 +377,4 @@ class Cycling extends Workout {
 
 // initalise App
 const InitApp = new App();
-// localStorage.clear('workout');
+localStorage.clear('workout');
