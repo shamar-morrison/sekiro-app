@@ -37,10 +37,16 @@ class App {
 	constructor() {
 		this._getPosition();
 		this._getLocalStorage();
+		this.themeSwitcher();
 
 		// hide form on ESC keypress
 		document.addEventListener('keydown', event => {
 			if (event.key === 'Escape') this._hideForm();
+		});
+
+		// animate settings panel
+		document.querySelector('.settings-icon').addEventListener('click', event => {
+			document.querySelector('.settings-panel').classList.toggle('translate-panel');
 		});
 
 		// workout form event listener
@@ -255,6 +261,7 @@ class App {
 				workoutControls.style.opacity = 1;
 			};
 
+			// hide controls on hover
 			workout.onmouseout = function (event) {
 				const workoutControls = workout.querySelector('.controls');
 				workoutControls.style.opacity = 0;
@@ -306,6 +313,7 @@ class App {
 		/**
 		 * Each marker should correspond to a workout object
 		 * add an ID to the new marker which matches the newly created workout object
+		 * so we can can access it later
 		 */
 		marker.id = workout.id;
 	}
@@ -333,6 +341,16 @@ class App {
 		localStorage.removeItem('workouts');
 		location.reload(); // reload browser
 	}
+
+	// Theme switcher
+	themeSwitcher() {
+		document.querySelector('ul.theme-list').addEventListener('click', function (event) {
+			if (event.target.tagName.toLowerCase() === 'li') {
+				const theme = event.target.getAttribute('class');
+				document.querySelector('.theme').setAttribute('href', `./src/css/${theme}.min.css`);
+			}
+		});
+	}
 }
 
 /**
@@ -348,20 +366,7 @@ class Workout {
 	}
 
 	_setDescription() {
-		const months = [
-			'January',
-			'February',
-			'March',
-			'April',
-			'May',
-			'June',
-			'July',
-			'August',
-			'September',
-			'October',
-			'November',
-			'December',
-		];
+		const months = ['Jan.', 'Feb.', 'Mar.', 'Apr.', 'May', 'Jun.', 'Jul.', 'Aug.', 'Sep.', 'Oct.', 'Nov.', 'Dec.'];
 
 		const day = ['Mon', 'Tue', 'Wed', 'Thur', 'Fri', 'Sat', 'Sun'];
 
