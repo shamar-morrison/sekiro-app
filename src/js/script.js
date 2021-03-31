@@ -53,7 +53,6 @@ class App {
 		form.addEventListener('submit', e => {
 			e.preventDefault();
 			this._newWorkout();
-			console.debug('new workout created!');
 		});
 
 		// workout type event listener
@@ -350,6 +349,22 @@ class App {
 				document.querySelector('.theme').setAttribute('href', `./src/css/${theme}.min.css`);
 			}
 		});
+	}
+
+	// edit workout
+	editWorkout(workoutID) {
+		// get workout from id
+		const workout = arrWorkouts.find(workout => workout.id === workoutID);
+		this._showForm();
+
+		// get data from form
+		const type = inputType.value;
+		const distance = +inputDistance.value;
+		const duration = +inputDuration.value;
+		const elevation = +inputElevation.value;
+		const cadence = +inputCadence.value;
+
+		// update workout details with new info
 	}
 }
 
