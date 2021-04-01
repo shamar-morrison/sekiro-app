@@ -17,7 +17,7 @@ const inputElevation = document.querySelector('.form__input--elevation');
 
 // popup options
 const popupOptions = {
-	maxWidth: 270,
+	maxWidth: 280,
 	minWidth: 100,
 	autoClose: false,
 	className: 'cycling-popup', // default value
@@ -186,7 +186,35 @@ class App {
 			workout.elevation = +inputElevation.value;
 			workout.cadence = +inputCadence.value;
 
-			// edit workout item and add in list
+			// set new description
+			const date = new Date(workout.date);
+			workout.description = `${workout.type.slice(0, 1).toUpperCase() + workout.type.slice(1)} on ${day[date.getDay()]}, ${
+				months[date.getMonth()]
+			} ${date.getDate()}`;
+
+			// edit marker
+			const oldMarker = arrMarkers.find(oldMarker => oldMarker.id === workout.id);
+			const oldMarkerIndex = arrMarkers.findIndex(oldMarker => oldMarker.id === workout.id);
+
+			this._mapObj.removeLayer(oldMarker); // remove old marker
+
+			const newMarker = L.marker(workout.coords, markerOptions)
+				.addTo(this._mapObj)
+				.bindPopup(
+					L.popup({
+						maxWidth: popupOptions.maxWidth,
+						minWidth: popupOptions.minWidth,
+						autoClose: popupOptions.autoClose,
+						className: `${workout.type === 'running' ? 'running-popup' : 'cycling-popup'}`,
+					})
+				)
+				.setPopupContent(`${workout.type === 'running' ? '🏃‍♂️' : '🚴‍♀️'} ${workout.description}`)
+				.openPopup();
+
+			arrMarkers[oldMarkerIndex] = newMarker; // replace old marker with new
+			console.debug('corresponding oldMarker', oldMarker);
+
+			// add edited workout to list
 			this._renderWorkout(workout, true);
 			return;
 		}
@@ -238,7 +266,6 @@ class App {
 
 		if (isEditing) {
 			const workoutListItem = document.querySelector(`[data-id="${workout.id}"]`);
-			console.debug('workoutListItem', workoutListItem);
 
 			if (workout.type === 'running') {
 				workoutListItem.classList.remove(`workout--cycling`);
@@ -251,12 +278,28 @@ class App {
 				workoutListItem.querySelector('.distance').textContent = `${workout.distance}`;
 				workoutListItem.querySelector('.duration').textContent = `${workout.duration}`;
 				workoutListItem.querySelector('.cadence').textContent = `${workout.cadence}`;
+				workoutListItem.querySelector('.--spm--m').textContent = `spm`;
+				workoutListItem.querySelector('.--pace--speed').textContent = `km/min`;
 
 				workoutListItem.querySelector('.pace').textContent = `${(workout.duration / workout.distance).toFixed(1)}`;
 				return;
 			}
 
 			if (workout.type === 'cycling') {
+				workoutListItem.classList.remove(`workout--cycling`);
+				workoutListItem.querySelector('.work-icon').textContent = '';
+				workoutListItem.querySelector('.work-icon').textContent = '🚴‍♀️';
+
+				workoutListItem.classList.add(`workout--${workout.type}`);
+				workoutListItem.querySelector('.workout__title').textContent = `${workout.description}`;
+
+				workoutListItem.querySelector('.distance').textContent = `${workout.distance}`;
+				workoutListItem.querySelector('.duration').textContent = `${workout.duration}`;
+				workoutListItem.querySelector('.elevation').textContent = `${workout.elevation}`;
+				workoutListItem.querySelector('.--spm--m').textContent = `m`;
+				workoutListItem.querySelector('.--pace--speed').textContent = `km/h`;
+
+				workoutListItem.querySelector('.speed').textContent = `${(workout.distance / (workout.duration / 60)).toFixed(1)}`;
 				return;
 			}
 		}
@@ -282,13 +325,13 @@ class App {
 					</div>
 					<div class="workout__details">
 						<span class="workout__icon">⚡️</span>
-						<span class="workout__value pace">${workout.pace.toFixed(1)}</span>
-						<span class="workout__unit">min/km</span>
+						<span class="workout__value pace speed">${workout.pace.toFixed(1)}</span>
+						<span class="workout__unit --pace--speed">km/min</span>
 					</div>
 					<div class="workout__details">
 						<span class="workout__icon">🦶🏼</span>
-						<span class="workout__value cadence speed">${workout.cadence}</span>
-						<span class="workout__unit">spm</span>
+						<span class="workout__value cadence elevation">${workout.cadence}</span>
+						<span class="workout__unit --spm--m">spm</span>
 					</div>
 				</li>
 				`;
@@ -312,22 +355,20 @@ class App {
 					</div>
 					<div class="workout__details">
 						<span class="workout__icon">⚡️</span>
-						<span class="workout__value pace speed cadence">${workout.speed.toFixed(1)}</span>
-						<span class="workout__unit">km/h</span>
+						<span class="workout__value pace speed">${workout.speed.toFixed(1)}</span>
+						<span class="workout__unit --pace--speed">km/h</span>
 					</div>
 					<div class="workout__details">
-						<span class="workout__icon">⛰</span>
-						<span class="workout__value elevation">${workout.elevGain}</span>
-						<span class="workout__unit">m</span>
+						<span class="workout__icon">🦶🏼</span>
+						<span class="workout__value cadence elevation">${workout.elevGain}</span>
+						<span class="workout__unit --spm--m">m</span>
 					</div>
        			 </li>
 				`;
 		}
 
 		form.insertAdjacentHTML('afterend', workoutHTML);
-
 		this._handleWorkoutControls();
-
 		this._hideForm();
 	}
 
@@ -382,7 +423,6 @@ class App {
 
 					// show edit workout form
 					app._showForm(undefined, true);
-					console.debug(workout);
 				}
 			};
 		});
@@ -446,20 +486,20 @@ class App {
 	}
 
 	// edit workout
-	editWorkout(workoutID) {
-		// get workout from id
-		const workout = arrWorkouts.find(workout => workout.id === workoutID);
-		this._showForm();
+	// editWorkout(workoutID) {
+	// 	// get workout from id
+	// 	const workout = arrWorkouts.find(workout => workout.id === workoutID);
+	// 	this._showForm();
 
-		// get data from form
-		const type = inputType.value;
-		const distance = +inputDistance.value;
-		const duration = +inputDuration.value;
-		const elevation = +inputElevation.value;
-		const cadence = +inputCadence.value;
+	// 	// get data from form
+	// 	const type = inputType.value;
+	// 	const distance = +inputDistance.value;
+	// 	const duration = +inputDuration.value;
+	// 	const elevation = +inputElevation.value;
+	// 	const cadence = +inputCadence.value;
 
-		// update workout details with new info
-	}
+	// 	// update workout details with new info
+	// }
 }
 
 /**
