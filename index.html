@@ -50,8 +50,11 @@
 			</div>
 
 			<ul class="workouts">
-				<form class="form hidden">
-					<h2 class="form__title">Enter workout details:</h2>
+				<!-- CREATE WORKOUT FORM -->
+				<form id="form" class="form hidden">
+					<h2 class="form__title new-workout">Enter workout details:</h2>
+					<h2 class="form__title edit-workout hide">Edit workout details:</h2>
+					<i class="delete-icon fas fa-times-circle"></i>
 					<div class="form__row">
 						<label class="form__label">Workout</label>
 						<select class="form__input form__input--type">
@@ -76,7 +79,8 @@
 						<label class="form__label">Elev Gain</label>
 						<input class="form__input form__input--elevation" type="number" placeholder="meters" />
 					</div>
-					<button class="form__btn">create new workout</button>
+					<button class="form__btn new-workout-btn">create new workout</button>
+					<button class="form__btn save-edit-btn no-display">save edited workout</button>
 				</form>
 
 				<!-- <li class="workout workout--running" data-id="1234567890">
