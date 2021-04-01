@@ -26,7 +26,7 @@ const popupOptions = {
 // marker options
 const markerOptions = {
 	riseOnHover: true,
-	draggable: true,
+	draggable: false,
 };
 
 let arrWorkouts = [];
@@ -211,6 +211,7 @@ class App {
 				.setPopupContent(`${workout.type === 'running' ? '🏃‍♂️' : '🚴‍♀️'} ${workout.description}`)
 				.openPopup();
 
+			newMarker.id = workout.id; // assign ID to new marker
 			arrMarkers[oldMarkerIndex] = newMarker; // replace old marker with new
 			console.debug('corresponding oldMarker', oldMarker);
 
