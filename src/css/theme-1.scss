@@ -1,0 +1,23 @@
+@import './base';
+
+$white: #fff;
+
+$color-brand--1: #007bff; // cycling border
+$color-brand--2: #28a745; // running border
+
+$form-btn-bg: #3b0199;
+$form-btn-hover: #340086;
+$form-btn-focus: rgb(45, 0, 117);
+
+$color-dark--1: #6610f2; // main sidebar
+$color-dark--2: #6f42c1; // 'workout details' background
+$color-dark--2-trans: #4803b896; // enter workout details background
+
+$color-light--1: #ffc107; // workout details units color
+$color-light--2: #ececec; // workout details title/time color
+$color-light--3: rgb(214, 222, 224);
+
+$box-shadow: 11px 2px 18px -13px #000000b9;
+$box-shadow--inset: inset -20px -1px 11px -18px #000000;
+
+@include base();
